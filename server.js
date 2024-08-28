@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const bcrypt = require('bcrypt');
 const User = require('./models/User');
+require('dotenv').config(); // Load environment variables
 
 const app = express();
 app.use(bodyParser.json());
@@ -41,18 +43,18 @@ app.post('/register', async (req, res) => {
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ username });
-  if (!user || !(await user.comparePassword(password))) {
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).send({ error: 'Invalid credentials' });
   }
-  const token = jwt.sign({ userId: user._id }, 'your_jwt_secret');
+  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
   res.send({ token });
 });
 
-// Middleware to protect routes
+// Middleware to authenticate users
 const authMiddleware = (req, res, next) => {
   const token = req.header('Authorization').replace('Bearer ', '');
   try {
-    const decoded = jwt.verify(token, 'your_jwt_secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
@@ -60,7 +62,22 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// Protected route example
-app.get('/dashboard', authMiddleware, (req, res) => {
-  res.send({ message: 'Welcome to your dashboard!' });
+// Route to serve the MBTI test
+app.get('/mbti-test', authMiddleware, (req, res) => {
+  res.send({ questions: 'MBTI test questions go here' });
+});
+
+// Route to submit the MBTI test results
+app.post('/mbti-test', authMiddleware, async (req, res) => {
+  const { mbtiResults } = req.body; // Expecting an array of four numbers
+  const user = await User.findById(req.user._id);
+  user.mbtiResults = mbtiResults;
+  await user.save();
+  res.send({ message: 'Test results saved successfully' });
+});
+
+// Route to get the user's MBTI test results
+app.get('/mbti-results', authMiddleware, async (req, res) => {
+  const user = await User.findById(req.user._id);
+  res.send({ mbtiResults: user.mbtiResults });
 });
