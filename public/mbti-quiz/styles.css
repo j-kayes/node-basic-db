@@ -1,0 +1,103 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    overflow-y: scroll;
+}
+
+.container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+    margin: 20px auto;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.question {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 5px;
+}
+
+input[type="range"] {
+    width: 100%;
+}
+
+.range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9em;
+    color: #555;
+}
+
+button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.results {
+    margin-top: 20px;
+}
+
+.result-bar {
+    margin-bottom: 20px;
+}
+
+.result-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.slider-container {
+    position: relative;
+    height: 10px;
+    background: #ccc;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.slider {
+    position: absolute;
+    top: -5px;
+    height: 20px;
+    width: 20px;
+    background: #007bff;
+    border-radius: 50%;
+}
+
+.tick-mark {
+    font-size: 20px;
+    color: green;
+    visibility: hidden;
+    margin-top: 5px;
+}
+
+.tick-mark.answered {
+    visibility: visible;
+}
+

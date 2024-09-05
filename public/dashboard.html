@@ -8,44 +8,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>Dashboard</h1>
-        <p>You have logged in successfully!</p>
-        <div id="mbti-section">
-            <!-- MBTI section will be populated by JavaScript -->
-        </div>
-        <a href="index.html" class="button">Go to Home</a>
+        <h2>Dashboard</h2>
+        <p>Welcome to your dashboard!</p>
+        
+        <a href="/quiz/index.html" class="button">Take the Quiz</a>
+        <a href="index.html" class="button">Logout</a>
     </div>
-
-    <script>
-        // TODO: add MBTI RESULTS AND LINK TO QUESTIONAIRE
-        document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            // Fetch user information using the token
-            fetch('/user-info', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const mbtiSection = document.getElementById('mbti-section');
-                if (data.mbtiCompleted) {
-                    mbtiSection.innerHTML = `<p>Your MBTI results: ${data.mbtiResults}</p>`;
-                } else {
-                    mbtiSection.innerHTML = `<a href="mbti-questionnaire.html" class="button">Take the MBTI Questionnaire</a>`;
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching user info:', error);
-                alert('An error occurred. Please try again.');
-            });
-        });
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
