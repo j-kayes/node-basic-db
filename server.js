@@ -10,26 +10,37 @@ const User = require('./models/User');
 const app = express();
 app.use(bodyParser.json());
 
-console.log('JWT Secret:', process.env.JWT_SECRET);  // Debug: Check if JWT_SECRET is loaded
-
-// Middleware to protect routes (authMiddleware)
+// Middleware to protect routes
 const authMiddleware = (req, res, next) => {
-  const token = req.header('Authorization').replace('Bearer ', '');
+  const authHeader = req.header('Authorization');
+  
+  if (!authHeader) {
+    // Stop here and send a 401 response if no token is present
+    return res.status(401).send({ error: 'Authorization header missing' });
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+
   try {
+    // Verify the token before proceeding to route handler
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
+
+    // Token is valid, pass control to the route handler
     next();
   } catch (error) {
-    res.status(401).send({ error: 'Please authenticate' });
+    // Invalid token, stop here and send a 401 response
+    res.status(401).send({ error: 'Invalid token, please authenticate' });
   }
 };
 
-// Serve static files
+// Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve quiz project
+// Serve quiz project for authenticated users only
 app.use('/quiz', authMiddleware, express.static(path.join(__dirname, 'public/mbti-quiz')));
 
+// Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/myapp', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -39,6 +50,7 @@ mongoose.connect('mongodb://localhost:27017/myapp', {
   console.log('Failed to connect to MongoDB', err);
 });
 
+// Start the server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
@@ -63,11 +75,13 @@ app.post('/login', async (req, res) => {
   if (!user || !(await user.comparePassword(password))) {
     return res.status(401).send({ error: 'Invalid credentials' });
   }
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);  // Sign the JWT token
+  
+  // Generate JWT token
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
   res.send({ token });
 });
 
-// Protected route (dashboard)
+// Protected route for dashboard (authenticated users only)
 app.get('/dashboard', authMiddleware, (req, res) => {
   res.send({ message: 'Welcome to your dashboard!' });
 });

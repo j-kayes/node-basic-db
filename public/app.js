@@ -32,17 +32,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password })  // Send username and password
                 });
+        
                 const data = await response.json();
-                if (data.token) {
+                if (response.ok) {
+                    // Store the token in localStorage
                     localStorage.setItem('token', data.token);
-                    window.location.href = 'dashboard.html';
+                    // Redirect to dashboard or perform any further actions
+                    window.location.href = '/dashboard.html';
                 } else {
-                    document.getElementById('message').textContent = data.error;
+                    console.error(data.error);  // Handle errors (e.g., invalid credentials)
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Login failed:', error);
             }
         });
     }
@@ -71,5 +74,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = 'login.html';
             });
         }
+    }
+
+    // Handle fetching the quiz HTML content
+    const quizButton = document.getElementById('quizButton');  // Assuming you have a button with id="quizButton"
+    if (quizButton) {
+        quizButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            const token = localStorage.getItem('token');  // Get the stored token
+
+            if (!token) {
+                alert('You need to log in to take the quiz!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/quiz/index.html', {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const html = await response.text();
+                    // Inject the quiz content into the page, for example:
+                    document.body.innerHTML = html;
+                } else {
+                    console.error('Failed to load quiz.');
+                }
+            } catch (error) {
+                console.error('Error fetching quiz:', error);
+            }
+        });
     }
 });
