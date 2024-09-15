@@ -11,6 +11,18 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cookieParser());  // Added this line
 
+// Helper function to calculate Euclidean distance
+function euclideanDistance(vectorA, vectorB) {
+  if (vectorA.length !== vectorB.length) {
+    throw new Error('Vectors must be of the same length');
+  }
+  let sum = 0;
+  for (let i = 0; i < vectorA.length; i++) {
+    sum += Math.pow(vectorA[i] - vectorB[i], 2);
+  }
+  return Math.sqrt(sum);
+}
+
 // Middleware to protect routes
 const authMiddleware = (req, res, next) => {
   const token = req.cookies.token;  // Changed from header to cookie
@@ -83,9 +95,73 @@ app.post('/login', async (req, res) => {
   res.status(200).send({ message: 'Login successful' });
 });
 
+app.post('/save-mbti', authMiddleware, async (req, res) => {
+  try {
+    const { mbtiVector, mbtiType } = req.body;
+
+    // Validate mbtiVector
+    if (!Array.isArray(mbtiVector) || mbtiVector.length !== 4 || mbtiVector.some(isNaN)) {
+      return res.status(400).json({ error: 'Invalid MBTI vector' });
+    }
+
+    // Get the user's ID from the auth middleware
+    const userId = req.user.userId;
+
+    // Update the user's record
+    await User.findByIdAndUpdate(userId, {
+      mbtiVector: mbtiVector,
+      mbtiType: mbtiType
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving MBTI data:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Protected route for dashboard (authenticated users only)
 app.get('/dashboard', authMiddleware, (req, res) => {
   res.send({ message: 'Welcome to your dashboard!' });
+});
+
+// Route to get similar users
+app.get('/similar-users', authMiddleware, async (req, res) => {
+  try {
+    const currentUserId = req.user.userId;
+
+    // Fetch the current user's MBTI vector
+    const currentUser = await User.findById(currentUserId, 'mbtiVector');
+
+    if (!currentUser || !currentUser.mbtiVector || currentUser.mbtiVector.length !== 4) {
+      return res.status(400).json({ error: 'Current user MBTI data not available' });
+    }
+
+    // Fetch other users with MBTI data, excluding the current user
+    const otherUsers = await User.find({
+      _id: { $ne: currentUserId },
+      mbtiVector: { $exists: true, $size: 4 },
+    }, 'username mbtiVector');
+
+    // Calculate Euclidean distances
+    const usersWithDistance = otherUsers.map(user => {
+      const distance = euclideanDistance(currentUser.mbtiVector, user.mbtiVector);
+      return {
+        userId: user._id,
+        username: user.username,
+        distance: distance,
+      };
+    });
+
+    // Sort users by distance (closest first)
+    usersWithDistance.sort((a, b) => a.distance - b.distance);
+
+    // Return the sorted list
+    res.status(200).json({ users: usersWithDistance });
+  } catch (error) {
+    console.error('Error fetching similar users:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Start the server

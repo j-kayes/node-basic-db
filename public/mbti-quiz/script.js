@@ -218,8 +218,10 @@ function calculateResults() {
     let mbtiType = '';
     let isExactly50 = false;
 
+    let mbtiVectorObj = [];
     // Determine MBTI type and check for balanced dimensions
     dimensions.forEach(dimension => {
+        mbtiVectorObj.push(dimension.score);
         if (dimension.score === 50) {
             isExactly50 = true;
         }
@@ -253,7 +255,34 @@ function calculateResults() {
     if (isExactly50) {
         resultHTML += `<p>Your results indicate a 50/50 balance in one or more dimensions. This suggests that your type may be somewhere between two types, and further introspection might be necessary to determine your dominant preferences.</p>`;
     }
-
     // Display the results
     resultsElement.innerHTML = resultHTML;
+
+    fetch('/save-mbti', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+        body: JSON.stringify({
+            mbtiType: mbtiType,
+            mbtiVector: mbtiVectorObj
+        }),
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // MBTI vector saved successfully
+            console.log('MBTI vector saved successfully.');
+            // Proceed to display results or next steps
+        } else {
+            // Handle error
+            console.error('Error saving MBTI vector:', result.error);
+            alert('Error saving your results. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An unexpected error occurred. Please try again.');
+    });
 }

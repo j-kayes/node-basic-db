@@ -2,9 +2,13 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  mbtiResults: { type: [Number], default: null }, // Store MBTI results as an array of four numbers
+  username: { type: String, unique: true },
+  password: String,
+  mbtiType: String,
+  mbtiVector: {
+    type: [Number], // An array of numbers representing the 4D vector
+    default: [null, null, null, null], // Initialize with zeros or null if preferred
+  },
 });
 
 userSchema.pre('save', async function (next) {
