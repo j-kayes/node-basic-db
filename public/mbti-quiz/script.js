@@ -274,6 +274,7 @@ function calculateResults() {
         if (result.success) {
             // MBTI vector saved successfully
             console.log('MBTI vector saved successfully.');
+            console.log('MBTI vector: ' + mbtiVectorObj);
             // Proceed to display results or next steps
         } else {
             // Handle error

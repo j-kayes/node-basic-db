@@ -64,8 +64,8 @@ mongoose.connect('mongodb://localhost:27017/myapp', {
 // Register route
 app.post('/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const user = new User({ username, password });
+    const { username, password, name, gender, email } = req.body;
+    const user = new User({ username, password, name, gender, email });
     await user.save();
     res.status(201).send({ message: 'User registered successfully' });
   } catch (error) {
@@ -141,15 +141,19 @@ app.get('/similar-users', authMiddleware, async (req, res) => {
     const otherUsers = await User.find({
       _id: { $ne: currentUserId },
       mbtiVector: { $exists: true, $size: 4 },
-    }, 'username mbtiVector');
+    }, 'username name email gender mbtiVector mbtiType');
+    console.log(otherUsers);
 
     // Calculate Euclidean distances
     const usersWithDistance = otherUsers.map(user => {
-      const distance = euclideanDistance(currentUser.mbtiVector, user.mbtiVector);
       return {
         userId: user._id,
         username: user.username,
-        distance: distance,
+        distance: euclideanDistance(currentUser.mbtiVector, user.mbtiVector),
+        mbtiVector: user.mbtiVector,
+        mbtiType: user.mbtiType,
+        email: user.email,
+        name: user.name
       };
     });
 
