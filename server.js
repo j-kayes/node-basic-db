@@ -61,6 +61,31 @@ mongoose.connect('mongodb://localhost:27017/myapp', {
   console.log('Failed to connect to MongoDB', err);
 });
 
+// Protected route for dashboard (authenticated users only)
+app.get('/dashboard', authMiddleware, async (req, res) => {
+  try {
+    // Get the current user's ID from the JWT token
+    const currentUserId = req.user.userId;
+
+    // Fetch the user's data (username, MBTI type, and vector)
+    const user = await User.findById(currentUserId, 'username mbtiType mbtiVector');
+
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    // Send the user data to the frontend
+    res.status(200).json({
+      username: user.username,
+      mbtiType: user.mbtiType,
+      mbtiVector: user.mbtiVector,
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Register route
 app.post('/register', async (req, res) => {
   try {
@@ -120,11 +145,6 @@ app.post('/save-mbti', authMiddleware, async (req, res) => {
   }
 });
 
-// Protected route for dashboard (authenticated users only)
-app.get('/dashboard', authMiddleware, (req, res) => {
-  res.send({ message: 'Welcome to your dashboard!' });
-});
-
 // Route to get similar users
 app.get('/similar-users', authMiddleware, async (req, res) => {
   try {
@@ -132,17 +152,20 @@ app.get('/similar-users', authMiddleware, async (req, res) => {
 
     // Fetch the current user's MBTI vector
     const currentUser = await User.findById(currentUserId, 'mbtiVector');
-
-    if (!currentUser || !currentUser.mbtiVector || currentUser.mbtiVector.length !== 4) {
-      return res.status(400).json({ error: 'Current user MBTI data not available' });
+    // Check if MBTI data is available
+    for (let index = 0; index < currentUser.mbtiVector.length; index++) {
+      if(!currentUser.mbtiVector[index]){
+        return res.status(200).json({
+          message: 'Please take the MBTI quiz before viewing similar users.',
+        });
+      }
+      
     }
-
     // Fetch other users with MBTI data, excluding the current user
     const otherUsers = await User.find({
       _id: { $ne: currentUserId },
       mbtiVector: { $exists: true, $size: 4 },
     }, 'username name email gender mbtiVector mbtiType');
-    console.log(otherUsers);
 
     // Calculate Euclidean distances
     const usersWithDistance = otherUsers.map(user => {
@@ -160,7 +183,7 @@ app.get('/similar-users', authMiddleware, async (req, res) => {
     // Sort users by distance (closest first)
     usersWithDistance.sort((a, b) => a.distance - b.distance);
 
-    // Return the sorted list
+    // Return the sorted list of similar users
     res.status(200).json({ users: usersWithDistance });
   } catch (error) {
     console.error('Error fetching similar users:', error);

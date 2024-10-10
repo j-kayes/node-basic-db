@@ -57,8 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle dashboard loading
     const dashboardPage = document.getElementById('welcomeMessage');
+    const mbtiTypeElement = document.getElementById('mbtiType');
+    const mbtiVectorElement = document.getElementById('mbtiVector');
+
     if (dashboardPage) {
-        // Fetch the dashboard data without including the token
+        // Fetch the dashboard data including the username and MBTI information
         fetch('/dashboard', {
             method: 'GET',
             credentials: 'include'  // Include cookies in the request
@@ -66,7 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(async response => {
             if (response.ok) {
                 const data = await response.json();
-                dashboardPage.textContent = data.message;
+
+                // Update the dashboard with the fetched data
+                dashboardPage.textContent = `Welcome to your dashboard, ${data.username}!`;
+                mbtiTypeElement.textContent = `MBTI Type: ${data.mbtiType || 'Take the quiz to learn your type'}`;
+                mbtiVectorElement.textContent = `MBTI Vector: ${data.mbtiVector ? data.mbtiVector.join(', ') : 'N/A'}`;
             } else {
                 // Not authenticated, redirect to login
                 window.location.href = 'login.html';
@@ -74,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(error => {
             console.error('Error:', error);
-            window.location.href = 'login.html';
+            //window.location.href = 'login.html';
         });
     }
 

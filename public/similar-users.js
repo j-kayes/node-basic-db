@@ -11,9 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
   })
   .then(data => {
       if (data.users) {
-          console.log(data.users);
           displayUsers(data.users);
-      } else {
+      } else if(data.message){
+        const usersList = document.getElementById('usersList');
+        usersList.innerHTML = `
+            <p>${data.message}</p>
+            <button id="quizButton" onclick="window.location.href='/mbti-quiz/main.htm'" class="button">Take the Quiz</button>
+    `;
+      }
+      else {
           console.error('Error fetching users:', data.error);
           displayError('Unable to fetch similar users.');
       }
@@ -42,10 +48,11 @@ function displayUsers(users) {
 
       userDiv.innerHTML = `
           <p><strong>Username:</strong> ${user.username}</p>
-          <p><strong>Similarity Score:</strong> ${user.distance.toFixed(2)}</p>
+          <p><strong>Similarity Score:</strong> ${user.distance}</p>
           <p><strong>MBTI Type:</strong> ${user.mbtiType}</p>
           <p><strong>MBTI Vector:</strong> ${mbtiVectorDisplay}</p>
           <p><strong>Name:</strong> ${user.name}</p>
+          <p><strong>Gender:</strong> ${user.gender}</p>
           <p><strong>Email:</strong> ${user.email}</p>
       `;
       usersList.appendChild(userDiv);
